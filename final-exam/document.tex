@@ -1,0 +1,287 @@
+\documentclass[]{article}
+\usepackage{ listings} 
+\usepackage{graphicx}
+\graphicspath{ {images/} }
+\usepackage{float}
+\usepackage{geometry}
+\usepackage{pdfpages}
+\usepackage{multirow}
+
+\usepackage{algorithm}  
+\usepackage{algpseudocode}  
+\usepackage{amsmath} 
+
+\renewcommand{\algorithmicrequire}{\textbf{Input:}}
+\renewcommand{\algorithmicensure}{\textbf{Output:}}
+
+\makeatletter
+\def\@maketitle{%       
+	\newpage
+	\null
+	\vskip 14em%
+	\begin{center}%
+		\let \footnote \thanks
+		{\LARGE \@title \par}%
+		\vskip 12em%
+		{\large
+			\lineskip .5em%
+			\begin{tabular}[t]{c}%
+				\@author
+			\end{tabular}\par}%
+		\vskip 1em%
+		{\large \@date}%
+	\end{center}%
+	\par
+	\vskip 1.5em}
+\makeatother
+%opening
+\title{\Huge COT5405 - Analys of Algorithms \\ Final-Exam}
+\author{Qinxuan Shi \\ UFID: 83518162}
+\special{papersize=8.5in,11in}
+\geometry{left=2cm,right=2cm,top=1.5cm,bottom=1.5cm}
+
+\begin{document}
+	
+	\maketitle
+	\clearpage
+	
+	\section{Problem 1}
+	
+	\subsection{Pseudo-code of the Algorithm}
+	
+	\begin{algorithm}[H]
+		\caption{Max total value}  
+		\begin{algorithmic} 
+			\Require 
+			\State Integer W, capacity of knapsack
+			\State Integer T, time the police will arrive
+			\State Integer n, number of the item in the store
+			\State v[n], v[i] means the value of the item with index i
+			\State w[n], w[i] means the weight of the item with index i
+			\State t[n], t[i] means the time will be grabbed of the item with index i
+			\Ensure
+			\State Define that dp[n+1][W+1][T+1] to save the maximum total value.
+			\State And dp[i][j][t] means for the first i items that can be selected, when the backpack capacity is j and the arrival time is t, the maximum value of all choices. 
+			\State Initial dp[i][j][0], dp[i][0][t] and dp [0][j][t] to 0.  \\
+
+			\For{i= 0 to n}
+				\For{j=0 to W}
+					\State dp[i][j][0] $\leftarrow$ 0
+				\EndFor
+			\EndFor  \\
+			
+			\For{i= 0 to n}
+				\For{t=0 to T}
+					\State dp[i][0][t] $\leftarrow$ 0
+				\EndFor
+			\EndFor  \\
+			
+			\For{j= 0 to W}
+				\For{t=0 to T}
+					\State dp[0][j][t] $\leftarrow$ 0
+				\EndFor
+			\EndFor   \\
+			
+			\For{t= 0 to T}
+				\For{j= 0 to W}
+					\For{i= 0 to n}
+						\If{w[i]\textgreater j $\lor$ t[i]\textgreater t}
+							\State dp[i][j][t] $\leftarrow$ dp[i-1][j][t]
+						\ElsIf{w[i]$\leq$ j $\land$ t[i]$\leq$ t}
+							\State dp[i][j][t] $\leftarrow$ max(dp[i-1][j][t], dp[i-1][j-w[i]][t-t[i]] + v[i])
+						\EndIf
+					\EndFor
+				\EndFor
+			\EndFor   \\
+			\Return dp[n+1][W+1][T+1].
+		\end{algorithmic}  
+	\end{algorithm} 
+
+	\begin{algorithm}[H]
+		\caption{get the items chosen(dp[][][])}  
+		\begin{algorithmic} 
+			\Require 
+			\State get dp[n+1][W+1][T+1] from algorithm above
+			\Ensure
+			\State i=n, j=W, t=T, start from the last element of dp.
+			\State initial S to be the set of all items that are chosen.
+			\While{i \textgreater 0}
+				\If{dp[i-1][j][t] = dp[i][j][t]}
+					\State i $\leftarrow$ i-1
+				\ElsIf{dp[i-1][j][t] $\neq$ dp[i][j][t]}
+					\State S $\leftarrow$ S $\cup$ i
+					\State i $\leftarrow$ i-1
+					\State j $\leftarrow$ j-w[i]
+					\State t $\leftarrow$ t-t[i]
+				\EndIf
+			\EndWhile   \\
+			\Return S.
+		\end{algorithmic}  
+	\end{algorithm} 
+	
+	\subsection{Proof of the algorithm's correctness}
+	
+	According to the problem, the goal is to get the max total value under the constriction of capacity of knapsack W and the arriving time of police T. so we use OPT(i, j, t) to represent for the first i items that can be selected, when the backpack capacity is j and the arrival time of police is t, the maximum value of all choices.  \\ 
+	
+	\noindent Compare to the kanpsack problem, we consider the following cases:\\       
+	
+	\noindent Firstly, when the weight of the item of index i is greater than the capacity of the backpack j, the item cannot be loaded into the backpack. Then for the first i items that can be selected and the first i-1 items that can be selected, their maximum total value and the way they choose are the same.   \\
+	
+	\noindent Secondly, there are two options when the item of index i can be loaded into the backpack.   \\
+	
+  	\noindent 1. Put it into the backpack. Under this condition, the maximum total value is $OPT(i-1, j-w[i], t-t[i]) + v[i]$. $OPT(i-1, j-w[i], t-t[i])$ represents for the first i-1 items that can be selected, when the backpack capacity is j-w[i] and the arrival time of police is t-t[i], the maximum value of all choices.  \\
+  
+  	\noindent 2. Not put it into the backpack. Under this condition, the maximum total value is the same as OPT(i-1, j, t).  \\
+	
+	\noindent Bellman equation: \\
+	
+	OPT(i, j, t) =
+	$\begin{cases} 
+		0,  & \mbox{if }\mbox{i=0 $\lor$ j=0 $\lor$ t=0} \\
+		OPT(i-1, j, t),  & \mbox{if }\mbox{w[i]\textgreater j or t[i]\textgreater t} \\
+		max\{OPT(i-1, j-w[i], t-t[i]) + v[i], OPT(i-1, j, t)\},  & \mbox{if }\mbox{w[i]$\leq$ j and t[i]$\leq$ t}
+	\end{cases}$ \\
+
+	\noindent To the Algorithm 2, in order to get the items that are chosen to get the maximum total value, we start from i=n, j=W and t=T, which is the last element of dp matrix.   \\
+	
+	\noindent If dp(i, j, t) = dp(i-1, j, t), which means that the item i is not chosen, so we start from dp(i-1, j, t) to keep finding. If dp(i, j, t) $\neq$ dp(i-1, j, t), which means that the item i is chosen, so the next item should start from dp(i-1, j-w[i], t-t[i]). When the i = 0, it means that the value is 0, there is no item in the kanpsack, so the program end.    \\
+	
+	\subsection{Algorithm's running time}
+	
+	\noindent According to the Algorithm Max total value, the first three for-loops are going to initialize the dp matrix which is used to memorize the maximum total value of each dp[i][j][t]. Since each of them uses two for-loops, the complexity is O(nW), O(nT) and O(WT).  \\
+	
+	\noindent To the forth for-loop, which is used to compute each dp[i][j][t]. According to the pesudocode, there are three for-loops in the forth for-loop, compare to the knapsack problem in the lecture, it can exactly form a three-dimentional table and get O(nWT) table entries. \\
+	
+	\noindent According to the algorithm 2, the worst situation is that all of the n items are chosen, so the algorithm takes O(n) time to get the set of items that form the maximum total value.  \\
+	
+	\noindent As a result, the algorithm 1 solves the problem in O(nWT) time and O(nWT) space and the algorithm 2 solves the problem in O(n) time.  \\
+	
+	\clearpage
+	
+	\section{Problem 2}
+	
+	\subsection{Pseudo-code of the Algorithm}
+	\begin{algorithm}  
+		\caption{Minimum number of edges}  
+		\begin{algorithmic} 
+			\Require G(V, E) undirected graph, s,t$\in$V, suppose that each c(e)=1
+			\Ensure
+			\State let G'(v', E') be a directed graph, V' = V and initial E' = $\emptyset$
+			
+			\For{each (v1, v2)$\in$ E}
+				\State E' = E'$\cup$\{v1$\rightarrow$v2\}$\cup$\{v2$\rightarrow$v1\}
+			\EndFor  \\
+			
+			\State Using Edmonds-Karp(G')
+			\For{e$\in$E'}
+				\State f(e) $\leftarrow$ 0
+			\EndFor
+			\State $G_{f}$$\leftarrow$ residual network of G' with respect to flow f.
+			\While{there exists an s$\rightarrow$t path in $G_{f}$}
+				\State P ← BFS($G_{f}$).
+				\State f ← Augment(f, c, P).
+				\State update $G_{f}$.
+			\EndWhile   \\
+			
+			\State BFS($G_{f}$), start from s, get the set of nodes reachable from s in $G_{f}$ as $V_{m}$.  \\
+			
+			\State let M to save the edges that belong to the minimum cut .  
+			
+			\For{each edge e(v1,v2)$\in$E}
+				\State if v1$\in$ $V_{m}$ and v2$\notin$ $V_{m}$
+				\State M$\leftarrow$ M $\cup$ e(v1,v2)
+			\EndFor
+			
+		\end{algorithmic}  
+	\end{algorithm} 
+	
+	\subsection{Proof of the algorithm's correctness}
+	
+	\noindent Refer to the edge-connectivity version of Menger's theorem, we can know that the size of the minimum edge cut for x and y is equal to the maximum number of pairwise edge-independent paths from x to y. Because the graph has no weight, so suppose that c(e)=1, and we can also get the lemma of Menger's theorem that the maximum flow flow of G equals to the maximum number of pairwise edge-independent paths from x to y. \\
+	
+	\begin{figure}
+		\centering
+		\includegraphics[width=0.7\linewidth]{../../../../Users/15147/OneDrive/桌面/screenshots/gan_1}
+		\caption{}
+		\label{fig:gan1}
+	\end{figure}
+	
+	
+	\noindent Then we can know that even though the problem wants to get the minimum number of edges that can be disconnected to partition the graph, it exactly equals to get the edges that make the flow f to be the maximum flow flow of G, and these edges form the minimum cut.   \\
+	
+	\noindent According to the pseudocode, firstly, I turned the undirected graph to the directed graph by turning the edge (v1, v2) to two directed edges v1$\rightarrow$ v2 and v2$\rightarrow$ v1. Then we can get a directed graph G', and we can easily get the maximum flow, here we use the Edmonds-Karp algorithm to get the maximum flow and minimum cut.  \\
+	
+	\noindent After that, we can also get the final state graph $G_{f}$, and we do the BFS search to get all the vertex belong to the set of minimum cut.   \\
+	
+	\noindent Finally, we get set of the edges M that have vertex belong to different partitions, which is the set of edges that form the minimum cut. According to the Menger's theorem and lemma above, M equals to the minimum number of edges that can be disconnected to partition the graph in such a way that two given vertices $s,t\in V$ are in separate partitions.   \\
+	
+	
+	\subsection{Algorithm's running time}
+	
+	\noindent According to the algorithm, the for-loop that is used to turn undirected graph to directed graph take O(m) time.  \\
+	
+	\noindent And here since we suppose c(e)=1 for each e$\in$E, so to the Edmonds-Karp algorithm, we count the number of edges to get the shortest path, the Edmonds-Karp algorithm here takes O($m^{2}n$) time.   \\
+	
+	\noindent Since we have the maximum flow and the final state graph $G_{f}$, we can get the set of nodes in O(m) time.   \\
+	
+	\noindent Finally, it also takes O(m) time to get all edges belong to the minimum number of edges.  \\
+	
+	\noindent As a result, the algorithm takes O($m^{2}n$) to solve the problem and get the minimum number of edges.   \\
+	
+	\clearpage
+	
+	\section{Problem 3}
+	
+	\subsection{Proof of the algorithm's correctness}
+	
+	\noindent According to the problem, to prove that the given problem X is NP-complete, we need to prove that:  \\
+	
+	1. X $\in$ NP.\\
+	
+	2. prove that Subset-Sum $\leq_{p}$ X.  \\
+	
+	\noindent 1. Firstly, proving that X $\in$ NP. We give an instance of the problem X to solve that: \\
+
+	Suppose that the two parts of the integers are S1 and S2. A is the set of $a_{i}$, and the length of A is n. \\
+	
+	Verigy that except $b[i] \in A$ in S1 and $c[i] \in A$ in S2, there is no other element in A that does not belongs to these two sets. It takes O(n) time. \\
+	
+	Compute the sum of both sets S1 and S2. It takes O(n) time.  \\
+	
+	See if the sum of S1 equals to the sum of S2. It takes O(1) time.  \\
+		
+	\noindent As a result, the certifier finishes in O(n) time, which belongs to poly-time. So the problem X $\in$ NP. \\
+	
+	\noindent 2. Secondely, we are going to prove that Subset-Sum $\leq_{p}$ X.  \\
+	
+	\noindent The Subset Problem provides the input as a set of numbers S and a target sum t, the problem aims at finding the subset A belonging to S with a sum equals to t. Let s be the sum of members of S. Let A' be the set of numbers equals to S-A. So the sum of A' is s-t.  \\
+	
+	\noindent According to the problem X, the set of numbers S is required to divide into two parts S1, S2 and the sum of S1 and S2 are equal.   \\
+	
+	\noindent We are going to construct problem set-partition by using Subset-Sum problem. Exactly, for all the instance of Subset-Sum problem, when the target sum t=s/2, the sum of A equals to the sum of A', it becomes the form of instance of problem set-partition. \\
+	
+	\noindent What's more, when the instance y is a yes of problem set-partition, which means that there exists two subset S1 and S2 have the sum of s/2, make the y is a yes holds. At this time, to the subset-sum instance x, the target sum t equals to s/2, and the subset A equals to S1 or S2, that the x is a yes holds. When y is not a yes condition, there also cannot find a subset A that has a sum equals to the target t=s/2. For example \\
+	
+	\noindent To conclude, given any instance x of Subset-Sum problem, we can construct an instance y of set-partition problem such that x is a yes instance of Subset-Sum problem if and only if y is a yes instance of set-partition problem. And y to be of size polynomial in x. So, Subset-Sum $\leq_{p}$ X holds. \\
+	
+	\noindent As a result, the problem is NP-complete X \backsim P(X $\vert$ Y).  \\
+
+	
+\end{document}
+\documentclass[]{article}
+
+%opening
+\title{}
+\author{}
+
+\begin{document}
+	
+	\maketitle
+	
+	\begin{abstract}
+		
+	\end{abstract}
+	
+	\section{}
+	
+\end{document}
